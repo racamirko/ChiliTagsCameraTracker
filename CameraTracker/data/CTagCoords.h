@@ -20,63 +20,38 @@
 *                                                                              *
 *******************************************************************************/
 
-#include "globalInclude.h"
-#include <opencv2/highgui/highgui.hpp>
-#include <iostream>
-#include <vector>
+#ifndef CTAGCOORDS_H
+#define CTAGCOORDS_H
+
+#include <opencv2/core/core.hpp>
 #include <map>
 
-#include "inputParsers.h"
+namespace ct {
 
-using namespace cv;
-using namespace std;
+    typedef enum { TC_UPLEFT = 0, TC_UPRIGHT, TC_DOWNLEFT, TC_DOWNRIGHT} enumCorners;
 
-int usageScenario1(int argc, char *argv[]);
-void displayUsage(char* _execName);
+    class CTagCoords
+    {
+    protected:
+        std::map<enumCorners, cv::Point3f> mapCornerCoords;
 
-int main(int argc, char *argv[])
-{
-    google::InitGoogleLogging(argv[0]);
+        cv::Point3f getCorner(ct::enumCorners _cornerId);
+        void setCorner(ct::enumCorners _cornerId, cv::Point3f _pt);
 
-    return usageScenario1(argc, argv);
+    public:
+        CTagCoords();
+
+        cv::Point3f getUpLeft(){ return getCorner(TC_UPLEFT); }
+        cv::Point3f getUpRight(){ return getCorner(TC_UPRIGHT); }
+        cv::Point3f getDownLeft(){ return getCorner(TC_DOWNLEFT); }
+        cv::Point3f getDownRight(){ return getCorner(TC_DOWNRIGHT); }
+
+        void setUpLeft(cv::Point3f _pt){ setCorner(TC_UPLEFT, _pt); }
+        void setUpRight(cv::Point3f _pt){ setCorner(TC_UPRIGHT, _pt); }
+        void setDownLeft(cv::Point3f _pt){ setCorner(TC_DOWNLEFT, _pt); }
+        void setDownRight(cv::Point3f _pt){ setCorner(TC_DOWNRIGHT, _pt); }
+    };
+
 }
 
-
-int usageScenario1(int argc, char *argv[]){
-    LOG(INFO) << "usageScenario1";
-    string inFilePtsGlobalCoords, inFileIntrinsicParams, inFileVideoStream;
-    string outFileCameraPosition;
-
-    if(argc < 5){
-        LOG(FATAL) << "Not enough parametrs, need 4 got " << argc-1;
-        cout << "Not enough params" << endl;
-        displayUsage(argv[0]);
-    }
-
-    inFilePtsGlobalCoords = string(argv[1]);
-    inFileIntrinsicParams = string(argv[2]);
-    inFileVideoStream = string(argv[3]);
-    outFileCameraPosition = string(argv[4]);
-
-    // global variables
-    map<int,Point3f> mapWorldPoints;
-    Mat cameraMatrix = Mat::eye(3,3, CV_64F);
-    Mat distCoeffs = Mat::zeros(8,1,CV_64F);
-    // next parameters change over time
-    Mat rMat = Mat::zeros(3,3,CV_64F);
-    Mat tMat = Mat::zeros(1,3,CV_64F);
-
-    // read config file with 3D points corespondances
-    load3dPoints(inFilePtsGlobalCoords, mapWorldPoints);
-
-    // read intrinsic parameters file
-    // get video file
-    // process scene by scene
-    // make viewer in processing Video + 3d projection of scene + projection of view
-}
-
-void displayUsage(char* _execName){
-    cout << "Usage" << endl;
-    cout << "\t" << _execName << " <in_tagPtsFile> <in_intrinsicFile> <in_vidoeFile> <out_cameraCoords>" << endl;
-}
-
+#endif // CTAGCOORDS_H
