@@ -20,57 +20,35 @@
 *                                                                              *
 *******************************************************************************/
 
-#include "globalInclude.h"
-#include <opencv2/highgui/highgui.hpp>
-#include <iostream>
-#include <vector>
-#include <map>
-
 #include "inputParsers.h"
+#include "globalInclude.h"
 
-using namespace cv;
+#include <fstream>
+
 using namespace std;
+using namespace cv;
 
-int usageScenario1(int argc, char *argv[]);
-void displayUsage(char* _execName);
+void load3dPoints(std::string _inFilePtsGlobalCoords, std::map<int, cv::Point3f> _mapWorldPoints){
+    LOG(INFO) << "load3dPoints";
+    ifstream inFile(_inFilePtsGlobalCoords);
+    while(!inFile.eof()){
 
-int main(int argc, char *argv[])
-{
-    google::InitGoogleLogging(argv[0]);
-
-    return usageScenario1(argc, argv);
+    }
 }
 
+void loadParams(std::string _inFilename, cv::Mat& _camMatrix, cv::Mat& _distCoef, cv::Mat& _rMat, cv::Mat& _tMat){
+    cv::FileStorage fs;
 
-int usageScenario1(int argc, char *argv[]){
-    LOG(INFO) << "usageScenario1";
-    string inFilePtsGlobalCoords, inFileIntrinsicParams, inFileVideoStream;
-    string outFileCameraPosition;
-
-    if(argc < 5){
-        LOG(FATAL) << "Not enough parametrs, need 4 got " << argc-1;
-        cout << "Not enough params" << endl;
-        displayUsage(argv[0]);
+    if( !fs.open(_inFilename, cv::FileStorage::READ) ){
+        LOG(FATAL) << "Could not read from: " << _inFilename;
+        return;
     }
 
-    inFilePtsGlobalCoords = string(argv[1]);
-    inFileIntrinsicParams = string(argv[2]);
-    inFileVideoStream = string(argv[3]);
-    outFileCameraPosition = string(argv[4]);
+    fs["CamMatrix"] >> _camMatrix;
+    fs["DistCoef"] >> _distCoef;
+    fs["RotMat"] >> _rMat;
+    fs["TransMat"] >> _tMat;
 
-    // global variables
-    map<int,Point3f> mapWorldPoints;
-
-    // read config file with 3D points corespondances
-    load3dPoints(inFilePtsGlobalCoords, mapWorldPoints);
-    // read intrinsic parameters file
-    // get video file
-    // process scene by scene
-    // make viewer in processing Video + 3d projection of scene + projection of view
-}
-
-void displayUsage(char* _execName){
-    cout << "Usage" << endl;
-    cout << "\t" << _execName << " <in_tagPtsFile> <in_intrinsicFile> <in_vidoeFile> <out_cameraCoords>" << endl;
+    fs.release();
 }
 
