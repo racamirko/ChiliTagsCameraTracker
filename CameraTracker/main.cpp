@@ -26,6 +26,9 @@
 #include <vector>
 #include <map>
 
+// tag detection
+#include <DetectChilitags.hpp>
+
 #include "inputParsers.h"
 #include "data/CTagCoords.h"
 
@@ -34,6 +37,7 @@ using namespace std;
 
 int usageScenario1(int argc, char *argv[]);
 void displayUsage(char* _execName);
+void getTagsFromDetector( chilitags::DetectChilitags& _detector, tListOfTags& _listFoundTags );
 
 #ifndef UNIT_TESTING
 
@@ -77,11 +81,40 @@ int usageScenario1(int argc, char *argv[]){
 
     // read config file with 3D points corespondances
     load3dPoints(inFilePtsGlobalCoords, mapWorldPoints);
+    loadCameraParams(inFileIntrinsicParams, cameraMatrix, distCoeffs, rMat, tMat);
 
-    // read intrinsic parameters file
     // get video file
-    // process scene by scene
-    // make viewer in processing Video + 3d projection of scene + projection of view
+    CvCapture* v = cvCaptureFromAVI(inFileVideoStream.c_str());
+    if(!v){
+        LOG(FATAL) << "Could not open video file " << inFileVideoStream;
+        return 1;
+    }
+
+    // main loop
+    {
+        IplImage* frame = cvQueryFrame(v);
+        chilitags::DetectChilitags detectChilitags(&frame);
+        tListOfTags foundTags;
+
+        // helper structures for main loop
+        unsigned long frameNo = cvGetCaptureProperty(v, CV_CAP_PROP_POS_FRAMES),
+                      endFrame = cvGetCaptureProperty(v, CV_CAP_PROP_FRAME_COUNT);
+
+        while(frameNo < endFrame){
+            frame = cvQueryFrame(v);
+            detectChilitags.update();
+            // find markers
+            getTagsFromDetector(detectChilitags, foundTags);
+        }
+    }
+
+    // tag detection setup
+
+}
+
+void getTagsFromDetector( chilitags::DetectChilitags& _detector, tListOfTags& _listFoundTags ){
+    _listFoundTags.clear();
+
 }
 
 
