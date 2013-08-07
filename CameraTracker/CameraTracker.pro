@@ -14,13 +14,23 @@ CONFIG   -= app_bundle
 
 TEMPLATE = app
 
-LIBS += -L/home/raca/repo/outside_projects/chilitags/build/src/lib -lchilitags -L/usr/local/lib -lopencv_core -lopencv_highgui -lopencv_video -lopencv_imgproc -lboost_system -lboost_filesystem -lopencv_calib3d -lglog
+LIBS += -L/home/raca/repo/outside_projects/chilitags/build/src/lib -lchilitags -L/usr/local/lib -lopencv_core -lopencv_highgui -lopencv_video -lopencv_imgproc -lboost_system -lboost_filesystem -lopencv_calib3d -lglog -lboost_unit_test_framework
 INCLUDEPATH += /home/raca/repo/outside_projects/chilitags/src/lib/include /usr/local/include
 
-QMAKE_CXXFLAGS_RELEASE += -O3 -march=native -DNDEBUG
-QMAKE_CXXFLAGS += -std=c++0x
+# remove or add -DTESTING to enable boost::unit_tests suite
 
-SOURCES += main.cpp
+QMAKE_CXXFLAGS_RELEASE += -O3 -march=native -DNDEBUG
+QMAKE_CXXFLAGS += -std=c++0x -DUNIT_TESTING
+
+SOURCES += main.cpp \
+    inputParsers.cpp \
+    tests.cpp \
+    data/CTagCoords.cpp \
+    unittests/CTestCase.cpp
 
 HEADERS += \
-    globalInclude.h
+    globalInclude.h \
+    inputParsers.h \
+    tests.h \
+    data/CTagCoords.h \
+    unittests/CTestCase.h
