@@ -27,6 +27,7 @@
 #include <map>
 
 #include "inputParsers.h"
+#include "data/CTagCoords.h"
 
 using namespace cv;
 using namespace std;
@@ -34,12 +35,16 @@ using namespace std;
 int usageScenario1(int argc, char *argv[]);
 void displayUsage(char* _execName);
 
+#ifndef UNIT_TESTING
+
 int main(int argc, char *argv[])
 {
     google::InitGoogleLogging(argv[0]);
 
     return usageScenario1(argc, argv);
 }
+
+#endif
 
 
 int usageScenario1(int argc, char *argv[]){
@@ -59,7 +64,7 @@ int usageScenario1(int argc, char *argv[]){
     outFileCameraPosition = string(argv[4]);
 
     // global variables
-    map<int,Point3f> mapWorldPoints;
+    map<int,ct::CTagCoords> mapWorldPoints;
     Mat cameraMatrix = Mat::eye(3,3, CV_64F);
     Mat distCoeffs = Mat::zeros(8,1,CV_64F);
     // next parameters change over time
@@ -74,6 +79,8 @@ int usageScenario1(int argc, char *argv[]){
     // process scene by scene
     // make viewer in processing Video + 3d projection of scene + projection of view
 }
+
+
 
 void displayUsage(char* _execName){
     cout << "Usage" << endl;
