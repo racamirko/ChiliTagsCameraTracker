@@ -28,18 +28,22 @@
 
 namespace ct {
 
-    typedef enum { TC_UPLEFT = 0, TC_UPRIGHT, TC_DOWNLEFT, TC_DOWNRIGHT} enumCorners;
+    typedef enum { TC_UPLEFT = 0, TC_UPRIGHT, TC_DOWNRIGHT, TC_DOWNLEFT} enumCorners;
 
     class CTagCoords
     {
     protected:
-        std::map<enumCorners, cv::Point3f> mapCornerCoords;
+        int mTagId;
+        std::map<enumCorners, cv::Point3f> mMapCornerCoords;
 
         cv::Point3f getCorner(ct::enumCorners _cornerId);
         void setCorner(ct::enumCorners _cornerId, cv::Point3f _pt);
 
     public:
         CTagCoords();
+
+        void setId(int _tagId){ mTagId = _tagId; }
+        int getId(){ return mTagId; }
 
         cv::Point3f getUpLeft(){ return getCorner(TC_UPLEFT); }
         cv::Point3f getUpRight(){ return getCorner(TC_UPRIGHT); }
