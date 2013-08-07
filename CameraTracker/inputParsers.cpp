@@ -84,7 +84,7 @@ void load3dPoints(std::string _inFilePtsGlobalCoords, std::map<int, ct::CTagCoor
     }
 }
 
-void loadParams(std::string _inFilename, cv::Mat& _camMatrix, cv::Mat& _distCoef, cv::Mat& _rMat, cv::Mat& _tMat){
+void loadCameraParams(std::string _inFilename, cv::Mat& _camMatrix, cv::Mat& _distCoef, cv::Mat& _rMat, cv::Mat& _tMat){
     cv::FileStorage fs;
 
     if( !fs.open(_inFilename, cv::FileStorage::READ) ){

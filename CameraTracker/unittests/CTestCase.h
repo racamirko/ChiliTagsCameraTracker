@@ -28,7 +28,7 @@ public:
     CTestCase();
 
     void test_load3dPoints();
-    // more tests to come...
+    void test_loadCameraParams();
 };
 
 #endif // CTESTCASE_H

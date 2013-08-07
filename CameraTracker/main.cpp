@@ -37,6 +37,10 @@ void displayUsage(char* _execName);
 
 #ifndef UNIT_TESTING
 
+//  alternative entry point when unit testing is enabled is located in
+//      unittests/CTestCase.cpp
+//
+
 int main(int argc, char *argv[])
 {
     google::InitGoogleLogging(argv[0]);
