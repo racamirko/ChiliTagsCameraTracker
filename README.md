@@ -19,7 +19,7 @@ Dependencies
  * **ChiliTags** - the open/free replacement for QR tags link to my cloned repository is [here](https://github.com/racamirko/chilitags)
  * **OpenCV** - for the actual computation algorithms for R/T matrices from point correspondance, link to the library [here](http://opencv.org/)
  * **glog** - library for log files [link](https://code.google.com/p/google-glog/)
- * **boost** - [link](http://www.boost.org/)
+ * **boost** - for file-system traversing and unit testing [link](http://www.boost.org/) 
 
 
 Licence
