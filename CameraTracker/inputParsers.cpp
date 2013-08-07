@@ -31,7 +31,7 @@
 using namespace std;
 using namespace cv;
 
-void load3dPoints(std::string _inFilePtsGlobalCoords, std::map<int, ct::CTagCoords> _mapWorldPoints){
+void load3dPoints(std::string _inFilePtsGlobalCoords, std::map<int, ct::CTagCoords>& _mapWorldPoints){
     LOG(INFO) << "load3dPoints";
     char buffer[BUFFER_SIZE];
     char bufferSubString[BUFFER_SIZE];
@@ -53,7 +53,7 @@ void load3dPoints(std::string _inFilePtsGlobalCoords, std::map<int, ct::CTagCoor
         coords.setId( atoi(bufferSubString) );
 
         // get 4 corners of the string
-        for( int cornerIdx = ct::TC_UPLEFT; cornerIdx < ct::TC_DOWNLEFT; cornerIdx++ ){
+        for( int cornerIdx = ct::TC_UPLEFT; cornerIdx <= ct::TC_DOWNLEFT; cornerIdx++ ){
             ct::enumCorners curCorner = static_cast<ct::enumCorners>(cornerIdx);
             Point3f newPoint;
             rawLine.getline(bufferSubString, BUFFER_SIZE, ';');
@@ -76,6 +76,7 @@ void load3dPoints(std::string _inFilePtsGlobalCoords, std::map<int, ct::CTagCoor
                             break;
                     }
                 }
+                coordIndex++;
             } while ( strlen(bufferOneNum) > 0 );
             coords.setCorner(curCorner, newPoint);
         }
