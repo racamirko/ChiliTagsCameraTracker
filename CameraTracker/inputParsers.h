@@ -26,8 +26,9 @@
 #include <string>
 #include <map>
 #include <opencv2/core/core.hpp>
+#include "data/CTagCoords.h"
 
-void load3dPoints(std::string _inFilePtsGlobalCoords, std::map<int, cv::Point3f> _mapWorldPoints);
+void load3dPoints(std::string _inFilePtsGlobalCoords, std::map<int, ct::CTagCoords> _mapWorldPoints);
 void loadParams(std::string _inFilename, cv::Mat& _camMatrix, cv::Mat& _distCoef, cv::Mat& _rMat, cv::Mat& _tMat);
 
 #endif // INPUTPARSERS_H

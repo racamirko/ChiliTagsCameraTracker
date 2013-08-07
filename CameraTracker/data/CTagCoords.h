@@ -36,20 +36,19 @@ namespace ct {
         int mTagId;
         std::map<enumCorners, cv::Point3f> mMapCornerCoords;
 
-        cv::Point3f getCorner(ct::enumCorners _cornerId);
-        void setCorner(ct::enumCorners _cornerId, cv::Point3f _pt);
-
     public:
         CTagCoords();
 
         void setId(int _tagId){ mTagId = _tagId; }
         int getId(){ return mTagId; }
 
+        cv::Point3f getCorner(ct::enumCorners _cornerId);
         cv::Point3f getUpLeft(){ return getCorner(TC_UPLEFT); }
         cv::Point3f getUpRight(){ return getCorner(TC_UPRIGHT); }
         cv::Point3f getDownLeft(){ return getCorner(TC_DOWNLEFT); }
         cv::Point3f getDownRight(){ return getCorner(TC_DOWNRIGHT); }
 
+        void setCorner(ct::enumCorners _cornerId, cv::Point3f _pt);
         void setUpLeft(cv::Point3f _pt){ setCorner(TC_UPLEFT, _pt); }
         void setUpRight(cv::Point3f _pt){ setCorner(TC_UPRIGHT, _pt); }
         void setDownLeft(cv::Point3f _pt){ setCorner(TC_DOWNLEFT, _pt); }

@@ -8,24 +8,27 @@
 #include <map>
 #include <opencv2/core/core.hpp>
 
-using namespace std;
+#include <boost/test/included/unit_test.hpp>
+#include <boost/bind.hpp>
 
-CTestCase::CTestCase()
-{
+using namespace std;
+using namespace boost::unit_test;
+using namespace cv;
+
+CTestCase::CTestCase(){
+
 }
 
 void CTestCase::test_load3dPoints(){
     string inFilename = "/home/raca/data/eyetracking/01_test_exp/ex01_points_coords.csv";
     map<int, ct::CTagCoords> mapCoords;
     load3dPoints(inFilename, mapCoords);
+    ct::CTagCoords secondTag = mapCoords[1];
+    BOOST_CHECK( secondTag.getId() == 1 );
+    BOOST_CHECK( secondTag.getUpLeft() == Point3f(157, 186, 0) );
 }
 
 #ifdef UNIT_TESTING
-
-#include <boost/test/included/unit_test.hpp>
-#include <boost/bind.hpp>
-
-using namespace boost::unit_test;
 
 void test_load3dPoints();
 

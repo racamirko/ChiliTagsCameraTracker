@@ -24,15 +24,62 @@
 #include "globalInclude.h"
 
 #include <fstream>
+#include <sstream>
+
+#define BUFFER_SIZE 1500
 
 using namespace std;
 using namespace cv;
 
-void load3dPoints(std::string _inFilePtsGlobalCoords, std::map<int, cv::Point3f> _mapWorldPoints){
+void load3dPoints(std::string _inFilePtsGlobalCoords, std::map<int, ct::CTagCoords> _mapWorldPoints){
     LOG(INFO) << "load3dPoints";
+    char buffer[BUFFER_SIZE];
+    char bufferSubString[BUFFER_SIZE];
+    char bufferOneNum[BUFFER_SIZE]; // a bit excesive for a 10char float number...
+
+    _mapWorldPoints.clear();
+
     ifstream inFile(_inFilePtsGlobalCoords);
     while(!inFile.eof()){
+        inFile.getline(buffer, BUFFER_SIZE);
+        if(buffer[0] == '#' || buffer[0] == '\n')
+            continue;
+        // cycle variables
+        ct::CTagCoords coords;
+        istringstream rawLine(buffer);
 
+        // line sub-section delimited by ";"
+        rawLine.getline(bufferSubString, BUFFER_SIZE, ';');
+        coords.setId( atoi(bufferSubString) );
+
+        // get 4 corners of the string
+        for( int cornerIdx = ct::TC_UPLEFT; cornerIdx < ct::TC_DOWNLEFT; cornerIdx++ ){
+            ct::enumCorners curCorner = static_cast<ct::enumCorners>(cornerIdx);
+            Point3f newPoint;
+            rawLine.getline(bufferSubString, BUFFER_SIZE, ';');
+            // individual points being read
+            istringstream numberStream(bufferSubString);
+            int coordIndex = 0;
+            do {
+                numberStream.getline(bufferOneNum, BUFFER_SIZE, ',');
+                if( strlen(bufferOneNum) > 0 ){
+                    float value = atof(bufferOneNum);
+                    switch( coordIndex ){
+                        case 0:
+                            newPoint.x = value;
+                            break;
+                        case 1:
+                            newPoint.y = value;
+                            break;
+                        case 2:
+                            newPoint.z = value;
+                            break;
+                    }
+                }
+            } while ( strlen(bufferOneNum) > 0 );
+            coords.setCorner(curCorner, newPoint);
+        }
+        _mapWorldPoints[coords.getId()] = coords;
     }
 }
 
