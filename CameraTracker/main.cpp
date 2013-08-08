@@ -107,6 +107,9 @@ int usageScenario1(int argc, char *argv[]){
         chilitags::DetectChilitags detectChilitags(&frame);
         tListOfTags foundTags;
 
+        // prepare output
+        initOutput(outFileCameraPosition);
+
         // helper structures for main loop
         unsigned long frameNo = cvGetCaptureProperty(v, CV_CAP_PROP_POS_FRAMES),
                       endFrame = cvGetCaptureProperty(v, CV_CAP_PROP_FRAME_COUNT);
@@ -127,6 +130,8 @@ int usageScenario1(int argc, char *argv[]){
             // update loop values
             rMat = newR; tMat = newT;
         }
+
+        finalizeOutput();
     }
 
 }
