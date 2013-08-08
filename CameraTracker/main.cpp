@@ -23,6 +23,7 @@
 #include "globalInclude.h"
 #include <opencv2/highgui/highgui.hpp>
 #include <iostream>
+#include <fstream>
 #include <vector>
 #include <map>
 
@@ -39,6 +40,12 @@ int usageScenario1(int argc, char *argv[]);
 void displayUsage(char* _execName);
 void getTagsFromDetector( tListOfTags& _listFoundTags, int _maxTagScope = 1024 );
 void calcCorespondance(tListOfTags& _foundTags,map<int,ct::CTagCoords>& _mapWorldPoints, cv::Mat& _camMat, cv::Mat& _distMat, cv::Mat& _initR, cv::Mat& _initT, cv::Mat& _rMat, cv::Mat& _tMat, bool _bReturnRotVec );
+
+// output values
+void initOutput(std::string _outputFilename);
+void writeData( unsigned long frameNo, cv::Mat& _rMat, cv::Mat& _tMat );
+void finalizeOutput();
+std::ofstream gOutputHnd; // Global output file handler
 
 #ifndef UNIT_TESTING
 
@@ -106,6 +113,7 @@ int usageScenario1(int argc, char *argv[]){
 
         while(frameNo < endFrame){
             frame = cvQueryFrame(v);
+            frameNo = cvGetCaptureProperty(v, CV_CAP_PROP_POS_FRAMES);
             detectChilitags.update();
             // find markers
             getTagsFromDetector(foundTags, maxNumTags);
@@ -114,6 +122,10 @@ int usageScenario1(int argc, char *argv[]){
             Mat newT = Mat::zeros(1,3,CV_64F);
             calcCorespondance(foundTags, mapWorldPoints, cameraMatrix, distCoeffs,
                               rMat, tMat, newR, newT, false);
+            // store values
+            writeData( frameNo, newR, newT );
+            // update loop values
+            rMat = newR; tMat = newT;
         }
     }
 
@@ -191,6 +203,37 @@ void calcCorespondance(tListOfTags& _foundTags,map<int,ct::CTagCoords>& _mapWorl
         _rMat = tmpRvec.clone();
 }
 
+void writeData( unsigned long frameNo, cv::Mat& _rMat, cv::Mat& _tMat ){
+    if( !gOutputHnd.is_open() ){
+        LOG(FATAL) << "Output stream not open for writing";
+        throw Exception();
+    }
+    gOutputHnd << frameNo << ", ";
+    for( auto iterMat = _rMat.begin<double>(); iterMat != _rMat.end<double>(); ++iterMat ){
+        gOutputHnd << *iterMat << ", ";
+    }
+    for( auto iterMat = _tMat.begin<double>(); iterMat != _tMat.end<double>(); ++iterMat ){
+        gOutputHnd << *iterMat;
+        if( iterMat + 1 != _tMat.end() )
+            gOutputHnd << ", ";
+        else
+            gOutputHnd << endl;
+    }
+}
+
+void initOutput(std::string _outputFilename){
+    gOutputHnd.open( _outputFilename.c_str() );
+    if( !gOutputHnd.is_open() ){
+        LOG(FATAL) << "Unable to open " << _outputFilename;
+        throw Exception();
+    }
+    gOutputHnd << "# frameNo, [9 fields of rot matrix], [3 fields of trans matrix]" << endl;
+}
+
+void finalizeOutput(){
+    if(gOutputHnd.is_open())
+        gOutputHnd.close();
+}
 
 void displayUsage(char* _execName){
     cout << "Usage" << endl;
