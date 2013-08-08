@@ -37,7 +37,8 @@ using namespace std;
 
 int usageScenario1(int argc, char *argv[]);
 void displayUsage(char* _execName);
-void getTagsFromDetector( chilitags::DetectChilitags& _detector, tListOfTags& _listFoundTags );
+void getTagsFromDetector( tListOfTags& _listFoundTags, int _maxTagScope = 1024 );
+void calcCorespondance(tListOfTags& _foundTags,map<int,ct::CTagCoords>& _mapWorldPoints, cv::Mat& _camMat, cv::Mat& _distMat, cv::Mat& _initR, cv::Mat& _initT, cv::Mat& _rMat, cv::Mat& _tMat, bool _bReturnRotVec );
 
 #ifndef UNIT_TESTING
 
@@ -70,6 +71,9 @@ int usageScenario1(int argc, char *argv[]){
     inFileIntrinsicParams = string(argv[2]);
     inFileVideoStream = string(argv[3]);
     outFileCameraPosition = string(argv[4]);
+
+    // fixed parameters (for now)
+    const int maxNumTags = 4;
 
     // global variables
     map<int,ct::CTagCoords> mapWorldPoints;
@@ -104,19 +108,88 @@ int usageScenario1(int argc, char *argv[]){
             frame = cvQueryFrame(v);
             detectChilitags.update();
             // find markers
-            getTagsFromDetector(detectChilitags, foundTags);
+            getTagsFromDetector(foundTags, maxNumTags);
+
+            Mat newR = Mat::zeros(3,3,CV_64F);
+            Mat newT = Mat::zeros(1,3,CV_64F);
+            calcCorespondance(foundTags, mapWorldPoints, cameraMatrix, distCoeffs,
+                              rMat, tMat, newR, newT, false);
         }
     }
 
-    // tag detection setup
-
 }
 
-void getTagsFromDetector( chilitags::DetectChilitags& _detector, tListOfTags& _listFoundTags ){
+void getTagsFromDetector( tListOfTags& _listFoundTags, int _maxTagScope ){
     _listFoundTags.clear();
 
+    if( _maxTagScope > 1024 ){
+        LOG(ERROR) << "Maximum tag scope incorrect, max corrected to 1024";
+        _maxTagScope = 1024;
+    }
+
+    for (int tagId = 0; tagId < _maxTagScope; ++tagId) {
+        chilitags::Chilitag curTag(tagId);
+
+        if (curTag.isPresent()) {
+            DLOG(INFO) << "Tag [" << tagId << "] found!";
+            _listFoundTags.push_back(pair<int, chilitags::Quad>(tagId, curTag.getCorners()));
+        }
+    }
 }
 
+void calcCorespondance(tListOfTags& _foundTags,map<int,ct::CTagCoords>& _mapWorldPoints,
+                       cv::Mat& _camMat, cv::Mat& _distMat,
+                       cv::Mat& _initR, cv::Mat& _initT,
+                       cv::Mat& _rMat, cv::Mat& _tMat,
+                       bool _bReturnRotVec )
+{
+    vector<Point3f> objPts;
+    vector<Point2f> imgPts;
+    Mat tmpRvec;
+
+    _tMat = _initT.clone();
+
+    if( _foundTags.size() == 0 ){
+        LOG(INFO) << "No tags found, replicating previous findings";
+        _rMat = _initR.clone();
+        return;
+    }
+
+    objPts.reserve(_foundTags.size());
+    imgPts.reserve(_foundTags.size());
+
+    // fill object points & img points
+    for( pair<int, chilitags::Quad> curTag : _foundTags ){
+        for( int cornerIdx = 0; cornerIdx < 4; ++cornerIdx ){
+            ct::enumCorners cornerLabel = static_cast<ct::enumCorners>(cornerIdx);
+            imgPts.push_back( curTag.second[cornerIdx] );
+            objPts.push_back( _mapWorldPoints[curTag.first].getCorner(cornerLabel) );
+        }
+    }
+
+    bool useInitialGuess = false;
+
+    if(sum(_initT)[0] == 0){
+        useInitialGuess = true;
+    }
+
+    if( useInitialGuess ){
+        if( !_bReturnRotVec){
+            Rodrigues(_initR, tmpRvec);
+        } else {
+            tmpRvec = _initR.clone();
+        }
+    }
+
+    // solve equation
+    solvePnP(objPts, imgPts, _camMat, _distMat, tmpRvec, _tMat, useInitialGuess);
+
+    // TODO: this should be made more memory-friendly
+    if( !_bReturnRotVec )
+        Rodrigues(tmpRvec, _rMat); // vector -> matrix
+    else
+        _rMat = tmpRvec.clone();
+}
 
 
 void displayUsage(char* _execName){
