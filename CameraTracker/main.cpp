@@ -26,6 +26,7 @@
 #include <fstream>
 #include <vector>
 #include <map>
+#include <stdio.h>
 
 // tag detection
 #include <DetectChilitags.hpp>
@@ -39,7 +40,7 @@ using namespace std;
 int usageScenario1(int argc, char *argv[]);
 void displayUsage(char* _execName);
 void getTagsFromDetector( tListOfTags& _listFoundTags, int _maxTagScope = 1024 );
-void calcCorespondance(tListOfTags& _foundTags,map<int,ct::CTagCoords>& _mapWorldPoints, cv::Mat& _camMat, cv::Mat& _distMat, cv::Mat& _initR, cv::Mat& _initT, cv::Mat& _rMat, cv::Mat& _tMat, bool _bReturnRotVec );
+void calcCorespondance(tListOfTags& _foundTags,map<int,ct::CTagCoords>& _mapWorldPoints, cv::Mat& _camMat, cv::Mat& _distMat, cv::Mat& _initR, cv::Mat& _initT, cv::Mat& _rMat, cv::Mat& _tMat, bool _bReturnRotVec, bool _bUseRansac = false );
 
 // output values
 void initOutput(std::string _outputFilename);
@@ -47,7 +48,7 @@ void writeData( unsigned long frameNo, cv::Mat& _rMat, cv::Mat& _tMat );
 void finalizeOutput();
 std::ofstream gOutputHnd; // Global output file handler
 
-#ifndef UNIT_TESTING
+//#ifndef UNIT_TESTING
 
 //  alternative entry point when unit testing is enabled is located in
 //      unittests/CTestCase.cpp
@@ -60,7 +61,7 @@ int main(int argc, char *argv[])
     return usageScenario1(argc, argv);
 }
 
-#endif
+//#endif
 
 
 int usageScenario1(int argc, char *argv[]){
@@ -87,7 +88,7 @@ int usageScenario1(int argc, char *argv[]){
     Mat cameraMatrix = Mat::eye(3,3, CV_64F);
     Mat distCoeffs = Mat::zeros(8,1,CV_64F);
     // next parameters change over time
-    Mat rMat = Mat::zeros(3,3,CV_64F);
+    Mat rMat = Mat::zeros(1,3,CV_64F);
     Mat tMat = Mat::zeros(1,3,CV_64F);
 
     // read config file with 3D points corespondances
@@ -106,7 +107,13 @@ int usageScenario1(int argc, char *argv[]){
         IplImage* frame = cvQueryFrame(v);
         chilitags::DetectChilitags detectChilitags(&frame);
         tListOfTags foundTags;
-
+#ifndef NDEBUG
+        // A data structure needed for OpenCv to draw text.
+        CvFont wndFont;
+        const static CvScalar wndColor= CV_RGB(255, 0, 255);
+        cvInitFont(&wndFont,CV_FONT_HERSHEY_SIMPLEX, 0.5, 0.5);
+        char debugTextBuffer[1000];
+#endif
         // prepare output
         initOutput(outFileCameraPosition);
 
@@ -120,11 +127,18 @@ int usageScenario1(int argc, char *argv[]){
             detectChilitags.update();
             // find markers
             getTagsFromDetector(foundTags, maxNumTags);
-
+#ifndef NDEBUG
+            std::sprintf(debugTextBuffer, "Frame: %d", frameNo);
+            cvPutText(frame, debugTextBuffer, cvPoint(20,20), &wndFont, wndColor);
+            std::sprintf(debugTextBuffer, "Found tags: %d", foundTags.size());
+            cvPutText(frame, debugTextBuffer, cvPoint(20,40), &wndFont, wndColor);
+            imshow("debugWnd", Mat(frame));
+            waitKey(1);
+#endif
             Mat newR = Mat::zeros(3,3,CV_64F);
             Mat newT = Mat::zeros(1,3,CV_64F);
             calcCorespondance(foundTags, mapWorldPoints, cameraMatrix, distCoeffs,
-                              rMat, tMat, newR, newT, false);
+                              rMat, tMat, newR, newT, false, true);
             // store values
             writeData( frameNo, newR, newT );
             // update loop values
@@ -158,7 +172,7 @@ void calcCorespondance(tListOfTags& _foundTags,map<int,ct::CTagCoords>& _mapWorl
                        cv::Mat& _camMat, cv::Mat& _distMat,
                        cv::Mat& _initR, cv::Mat& _initT,
                        cv::Mat& _rMat, cv::Mat& _tMat,
-                       bool _bReturnRotVec )
+                       bool _bReturnRotVec, bool _bUseRansac )
 {
     vector<Point3f> objPts;
     vector<Point2f> imgPts;
@@ -199,7 +213,10 @@ void calcCorespondance(tListOfTags& _foundTags,map<int,ct::CTagCoords>& _mapWorl
     }
 
     // solve equation
-    solvePnP(objPts, imgPts, _camMat, _distMat, tmpRvec, _tMat, useInitialGuess);
+    if(_bUseRansac)
+        solvePnPRansac(objPts, imgPts, _camMat, _distMat, tmpRvec, _tMat, useInitialGuess, 1000, 80.0, 2 ); // at least 1 tag
+    else
+        solvePnP(objPts, imgPts, _camMat, _distMat, tmpRvec, _tMat, useInitialGuess );
 
     // TODO: this should be made more memory-friendly
     if( !_bReturnRotVec )
@@ -219,7 +236,7 @@ void writeData( unsigned long frameNo, cv::Mat& _rMat, cv::Mat& _tMat ){
     }
     for( auto iterMat = _tMat.begin<double>(); iterMat != _tMat.end<double>(); ++iterMat ){
         gOutputHnd << *iterMat;
-        if( iterMat + 1 != _tMat.end() )
+        if( iterMat + 1 != _tMat.end<double>() )
             gOutputHnd << ", ";
         else
             gOutputHnd << endl;
@@ -232,7 +249,7 @@ void initOutput(std::string _outputFilename){
         LOG(FATAL) << "Unable to open " << _outputFilename;
         throw Exception();
     }
-    gOutputHnd << "# frameNo, [9 fields of rot matrix], [3 fields of trans matrix]" << endl;
+    gOutputHnd << "#\tframeNo, [3-9 fields of rot matrix], [3 fields of trans matrix]" << endl;
 }
 
 void finalizeOutput(){
