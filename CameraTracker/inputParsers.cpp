@@ -42,7 +42,7 @@ void load3dPoints(std::string _inFilePtsGlobalCoords, std::map<int, ct::CTagCoor
     ifstream inFile(_inFilePtsGlobalCoords);
     while(!inFile.eof()){
         inFile.getline(buffer, BUFFER_SIZE);
-        if(buffer[0] == '#' || buffer[0] == '\n')
+        if(buffer[0] == '#' || buffer[0] == '\n' || buffer[0] == '\0')
             continue;
         // cycle variables
         ct::CTagCoords coords;

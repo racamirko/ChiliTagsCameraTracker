@@ -30,6 +30,19 @@ void CTestCase::test_load3dPoints(){
 //    BOOST_CHECK( secondTag.getUpLeft() == Point3f(157, 186, 0) );
 }
 
+void CTestCase::displayWorldCoordinates( std::map<int,ct::CTagCoords>& _coords){
+    DLOG(INFO) << "Woorld coordinates data";
+    for( auto runner : _coords ){
+        DLOG(INFO) << "Tag id: " << runner.first;
+        for( int i = 0; i < 4; ++i ){
+            ct::enumCorners curCorner = static_cast<ct::enumCorners>(i);
+            Point3f pt = runner.second.getCorner(curCorner);
+            DLOG(INFO) << "\t[" << pt << "]";
+        }
+    }
+}
+
+
 void CTestCase::test_loadCameraParams(){
     // input params
     string inFilename = "/home/raca/data/eyetracking/01_test_exp/ex01_mirko.calib.xml";

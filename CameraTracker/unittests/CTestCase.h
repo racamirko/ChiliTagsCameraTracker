@@ -22,6 +22,9 @@
 #ifndef CTESTCASE_H
 #define CTESTCASE_H
 
+#include <map>
+#include "data/CTagCoords.h"
+
 class CTestCase
 {
 public:
@@ -29,6 +32,10 @@ public:
 
     void test_load3dPoints();
     void test_loadCameraParams();
+
+
+    // helper debug methods
+    static void displayWorldCoordinates( std::map<int,ct::CTagCoords>& _coords);
 };
 
 #endif // CTESTCASE_H
